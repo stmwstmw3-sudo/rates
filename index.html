@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>أسعار العملات مقابل الجنيه السوداني</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --line: #334155;
+            --accent: #22c55e;
+            --up: #22c55e;
+            --down: #ef4444;
+            --warn: #f59e0b;
+            --text: #f1f5f9;
+            --muted: #94a3b8;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: Tahoma, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+        header {
+            text-align: center;
+            padding: 40px 16px 28px;
+            background: linear-gradient(135deg, #14532d, #0f172a);
+        }
+        header h1 { margin: 0 0 6px; font-size: 1.9rem; }
+        header p { margin: 0; color: var(--muted); }
+        main { max-width: 900px; margin: 0 auto; padding: 20px 16px 40px; }
+        h2 { border-right: 4px solid var(--accent); padding-right: 10px; margin-top: 32px; }
+
+        .status {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            margin-top: 12px; font-size: 0.9rem; color: var(--muted);
+        }
+        .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); display: inline-block; }
+        .dot.ok { background: var(--up); box-shadow: 0 0 8px var(--up); }
+        .dot.bad { background: var(--down); }
+        .dot.manual { background: var(--warn); }
+
+        .hero {
+            background: var(--card);
+            border-radius: 14px;
+            padding: 20px;
+            text-align: center;
+        }
+        .hero .big { font-size: 2.4rem; font-weight: bold; color: var(--accent); }
+        .hero small { color: var(--muted); display: block; }
+        .hero .row { display: flex; justify-content: center; gap: 28px; flex-wrap: wrap; margin-top: 8px; }
+
+        .warn {
+            background: #422006;
+            border: 1px solid var(--warn);
+            color: #fde68a;
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-top: 14px;
+            font-size: 0.95rem;
+        }
+
+        .table-wrap { overflow-x: auto; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card);
+            border-radius: 12px;
+            overflow: hidden;
+            min-width: 560px;
+        }
+        th, td { padding: 11px 12px; text-align: right; }
+        th { background: var(--line); font-size: 0.95rem; }
+        tr:not(:last-child) td { border-bottom: 1px solid var(--line); }
+        td.num { font-variant-numeric: tabular-nums; }
+        .tag { font-size: 0.78rem; color: var(--muted); }
+        .chg { font-size: 0.85rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .chg.up { color: var(--up); }
+        .chg.down { color: var(--down); }
+        .chg.flat { color: var(--muted); }
+        tr.flash { animation: flash 1.6s ease-out; }
+        @keyframes flash { from { background: #14532d; } to { background: transparent; } }
+
+        .box {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 16px;
+        }
+        .conv { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        @media (max-width: 560px) { .conv { grid-template-columns: 1fr; } }
+        label { display: block; color: var(--muted); font-size: 0.9rem; margin-bottom: 4px; }
+        input, select {
+            width: 100%;
+            padding: 11px;
+            border-radius: 9px;
+            border: 1px solid var(--line);
+            background: var(--bg);
+            color: var(--text);
+            font-size: 1rem;
+            font-family: inherit;
+        }
+        .result { margin-top: 14px; font-size: 1.5rem; font-weight: bold; color: var(--accent); }
+
+        .edit { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+        @media (max-width: 700px) { .edit { grid-template-columns: 1fr 1fr; } }
+
+        button {
+            background: var(--accent);
+            color: #052e16;
+            border: 0;
+            border-radius: 9px;
+            padding: 11px 16px;
+            font-size: 1rem;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 12px;
+        }
+        button.secondary { background: var(--line); color: var(--text); margin-right: 8px; }
+
+        ul.sources { color: var(--muted); font-size: 0.92rem; padding-right: 20px; }
+        ul.sources a { color: #86efac; }
+        footer { text-align: center; color: var(--muted); padding: 20px 16px 36px; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>أسعار العملات مقابل الجنيه السوداني</h1>
+    <p>تتحدث الأسعار تلقائيًا كل دقيقة</p>
+    <div class="status"><span class="dot" id="dot"></span><span id="statusText">جاري التحميل...</span></div>
+</header>
+
+<main>
+
+    <div class="hero">
+        <small>الدولار الأمريكي في السوق الموازي</small>
+        <div class="row">
+            <div><small>شراء</small><span class="big" id="heroBuy">—</span></div>
+            <div><small>بيع</small><span class="big" id="heroSell">—</span></div>
+        </div>
+        <small>جنيه سوداني لكل 1 دولار <span class="chg" id="heroChg"></span></small>
+    </div>
+
+    <div class="warn">
+        الأسعار تتغير بسرعة وتختلف من مدينة لأخرى ومن صرّاف لآخر. اعتبر هذه الأرقام مرجعًا تقريبيًا وتأكد من السعر قبل أي عملية فعلية.
+    </div>
+
+    <h2>جدول العملات</h2>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr><th>العملة</th><th>شراء (ج.س)</th><th>بيع (ج.س)</th><th>التغيّر</th><th>نوع السعر</th></tr>
+            </thead>
+            <tbody id="rows"></tbody>
+        </table>
+    </div>
+    <p class="tag">التغيّر يقارن بآخر سعر تغيّر أمامك (أو آخر مرة فتحت فيها الصفحة). أسعار العملات غير الدولار محسوبة من سعر الدولار.</p>
+
+    <h2>المحوّل</h2>
+    <div class="box">
+        <div class="conv">
+            <div>
+                <label for="amount">المبلغ</label>
+                <input id="amount" type="number" min="0" step="any" value="100" inputmode="decimal">
+            </div>
+            <div>
+                <label for="from">من</label>
+                <select id="from"></select>
+            </div>
+            <div>
+                <label for="to">إلى</label>
+                <select id="to"></select>
+            </div>
+        </div>
+        <div class="result" id="result"></div>
+        <div class="tag">يستخدم المحوّل متوسط سعر الشراء والبيع.</div>
+        <button id="swap" class="secondary" type="button">عكس الاتجاه</button>
+    </div>
+
+    <h2>تجربة أسعار يدوية</h2>
+    <div class="box">
+        <p class="tag" style="margin-top:0">أدخل أرقامًا من عندك لتجربة الحساب. هذا يوقف التحديث التلقائي في صفحتك فقط، ويمكنك العودة له بزر واحد.</p>
+        <div class="edit">
+            <div><label for="usdBuy">الدولار – شراء</label><input id="usdBuy" type="number" step="any" inputmode="decimal"></div>
+            <div><label for="usdSell">الدولار – بيع</label><input id="usdSell" type="number" step="any" inputmode="decimal"></div>
+            <div><label for="eurUsd">اليورو بالدولار</label><input id="eurUsd" type="number" step="any" inputmode="decimal"></div>
+            <div><label for="gbpUsd">الإسترليني بالدولار</label><input id="gbpUsd" type="number" step="any" inputmode="decimal"></div>
+            <div><label for="kwdPerUsd">دينار كويتي لكل دولار</label><input id="kwdPerUsd" type="number" step="any" inputmode="decimal"></div>
+        </div>
+        <button id="apply" type="button">تطبيق يدويًا</button>
+        <button id="auto" class="secondary" type="button">العودة للتحديث التلقائي</button>
+        <button id="share" class="secondary" type="button">مشاركة عبر واتساب</button>
+    </div>
+
+    <h2>معلومات مهمة</h2>
+    <div class="box">
+        <ul style="padding-right:20px;margin:0">
+            <li><b>السعر الرسمي والسعر الموازي:</b> الجدول يعرض السوق الموازي فقط، ولم أجد سعرًا رسميًا حديثًا موثوقًا من بنك السودان.</li>
+            <li><b>الريال السعودي والدرهم الإماراتي والريال القطري والريال العُماني والدينار البحريني:</b> مربوطة بالدولار بسعر ثابت (3.75، 3.6725، 3.64، 0.3845، 0.376 لكل دولار)، فحسابها دقيق نسبيًا.</li>
+            <li><b>الدينار الكويتي:</b> مرتبط بسلة عملات وليس بسعر ثابت، فالرقم المستخدم (حوالي 0.306 لكل دولار) تقريبي ولم أتحقق منه من مصدر اليوم، ويمكنك تعديله في الملف <code>rates.json</code>.</li>
+            <li><b>اليورو والإسترليني:</b> يتغيران يوميًا، والرقم المستخدم تقريبي.</li>
+            <li><b>التحويلات:</b> أسعار تحويل الأموال عبر البنوك أو التطبيقات قد تختلف عن أسعار الصرّافين.</li>
+        </ul>
+    </div>
+
+    <h2>المصادر</h2>
+    <ul class="sources">
+        <li><a href="https://sudantribune.com/article/321418" target="_blank" rel="noopener">Sudan Tribune – الجنيه عند حوالي 12,000 للدولار (18 نوفمبر 2026)</a></li>
+        <li><a href="https://www.khaligyoun.com/730862/" target="_blank" rel="noopener">خليجيون – سعر الدولار في السودان (19 نوفمبر 2026)</a></li>
+        <li><a href="https://therighttrader.com/convert/usd-to-eur" target="_blank" rel="noopener">سعر اليورو مقابل الدولار (17 نوفمبر 2026)</a></li>
+        <li><a href="https://therighttrader.com/convert/usd-to-gbp" target="_blank" rel="noopener">سعر الإسترليني مقابل الدولار (16 نوفمبر 2026)</a></li>
+    </ul>
+
+</main>
+
+<footer>البيانات للاسترشاد فقط وليست نصيحة مالية.</footer>
+
+<script>
+    // ===== القيم الافتراضية (تُستخدم إذا تعذّر تحميل rates.json) =====
+    const DEFAULTS = {
+        updated: "2026-11-19T12:36:00+02:00",
+        usdBuy: 11934,
+        usdSell: 12098,
+        eurUsd: 1.10,
+        gbpUsd: 1.32,
+        kwdPerUsd: 0.306
+    };
+    const REFRESH_MS = 60 * 1000; // كل دقيقة
+
+    let state = { ...DEFAULTS };
+    let manual = false;
+    let prev = null; // آخر متوسطات قبل التغيّر
+
+    const $ = id => document.getElementById(id);
+    const fmt = n => Number(n).toLocaleString("en-US", { maximumFractionDigits: 2 });
+
+    function store(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {} }
+    function load(key) { try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; } }
+
+    // كم وحدة من العملة تساوي 1 دولار
+    function currencies() {
+        return [
+            { code: "USD", name: "الدولار الأمريكي",      per: 1,                   kind: "موازي" },
+            { code: "SAR", name: "الريال السعودي",        per: 3.75,                kind: "ربط ثابت" },
+            { code: "AED", name: "الدرهم الإماراتي",      per: 3.6725,              kind: "ربط ثابت" },
+            { code: "QAR", name: "الريال القطري",         per: 3.64,                kind: "ربط ثابت" },
+            { code: "KWD", name: "الدينار الكويتي",       per: state.kwdPerUsd,      kind: "تقديري" },
+            { code: "OMR", name: "الريال العُماني",       per: 0.3845,              kind: "ربط ثابت" },
+            { code: "BHD", name: "الدينار البحريني",      per: 0.376,               kind: "ربط ثابت" },
+            { code: "EUR", name: "اليورو",                per: 1 / state.eurUsd,     kind: "تقديري" },
+            { code: "GBP", name: "الجنيه الإسترليني",     per: 1 / state.gbpUsd,     kind: "تقديري" }
+        ].map(c => ({
+            ...c,
+            buy: state.usdBuy / c.per,
+            sell: state.usdSell / c.per,
+            mid: ((state.usdBuy + state.usdSell) / 2) / c.per
+        }));
+    }
+
+    function snapshot() {
+        const o = {};
+        currencies().forEach(c => o[c.code] = c.mid);
+        return o;
+    }
+
+    function changeHtml(code, mid) {
+        if (!prev || prev[code] == null) return `<span class="chg flat">—</span>`;
+        const diff = mid - prev[code];
+        const pct = (diff / prev[code]) * 100;
+        if (Math.abs(pct) < 0.005) return `<span class="chg flat">—</span>`;
+        const up = diff > 0;
+        return `<span class="chg ${up ? "up" : "down"}">${up ? "▲" : "▼"} ${fmt(Math.abs(pct))}%</span>`;
+    }
+
+    let lastKey = "";
+    function render() {
+        const list = currencies();
+        const key = list.map(c => c.mid.toFixed(4)).join("|");
+        const changed = lastKey && key !== lastKey;
+        $("rows").innerHTML = list.map(c =>
+            `<tr${changed ? ' class="flash"' : ''}>
+                <td>${c.name}<div class="tag">${c.code}</div></td>
+                <td class="num">${fmt(c.buy)}</td>
+                <td class="num">${fmt(c.sell)}</td>
+                <td>${changeHtml(c.code, c.mid)}</td>
+                <td class="tag">${c.kind}</td>
+            </tr>`
+        ).join("");
+        lastKey = key;
+        $("heroBuy").textContent = fmt(state.usdBuy);
+        $("heroSell").textContent = fmt(state.usdSell);
+        $("heroChg").innerHTML = changeHtml("USD", (state.usdBuy + state.usdSell) / 2);
+    }
+
+    function fillSelects() {
+        const options = `<option value="SDG">الجنيه السوداني (SDG)</option>` +
+            currencies().map(c => `<option value="${c.code}">${c.name} (${c.code})</option>`).join("");
+        const keepFrom = $("from").value || "USD";
+        const keepTo = $("to").value || "SDG";
+        $("from").innerHTML = options;
+        $("to").innerHTML = options;
+        $("from").value = keepFrom;
+        $("to").value = keepTo;
+    }
+
+    function sdgValue(code) {
+        if (code === "SDG") return 1;
+        return currencies().find(c => c.code === code).mid;
+    }
+
+    function convert() {
+        const amount = parseFloat($("amount").value);
+        if (isNaN(amount)) { $("result").textContent = ""; return; }
+        const from = $("from").value, to = $("to").value;
+        const value = amount * sdgValue(from) / sdgValue(to);
+        $("result").textContent = `${fmt(amount)} ${from} ≈ ${fmt(value)} ${to}`;
+    }
+
+    function loadInputs() {
+        $("usdBuy").value = state.usdBuy;
+        $("usdSell").value = state.usdSell;
+        $("eurUsd").value = state.eurUsd;
+        $("gbpUsd").value = state.gbpUsd;
+        $("kwdPerUsd").value = state.kwdPerUsd;
+    }
+
+    function setStatus(text, cls) {
+        $("statusText").textContent = text;
+        $("dot").className = "dot " + (cls || "");
+    }
+
+    function valid(j) {
+        return j && ["usdBuy", "usdSell", "eurUsd", "gbpUsd", "kwdPerUsd"]
+            .every(k => typeof j[k] === "number" && isFinite(j[k]) && j[k] > 0);
+    }
+
+    function applyRates(next) {
+        const before = snapshot();
+        const newState = { ...state, ...next };
+        const differs = ["usdBuy", "usdSell", "eurUsd", "gbpUsd", "kwdPerUsd"]
+            .some(k => newState[k] !== state[k]);
+        if (differs) prev = before;
+        state = newState;
+        store("lastSeen", snapshot());
+        render();
+        fillSelects();
+        convert();
+        loadInputs();
+    }
+
+    function updatedText(iso) {
+        const d = new Date(iso);
+        if (isNaN(d)) return "";
+        return d.toLocaleString("ar-SD", { dateStyle: "medium", timeStyle: "short" });
+    }
+
+    async function refresh() {
+        if (manual) return;
+        try {
+            const r = await fetch("rates.json?t=" + Date.now(), { cache: "no-store" });
+            if (!r.ok) throw new Error("bad status");
+            const j = await r.json();
+            if (!valid(j)) throw new Error("bad data");
+            applyRates(j);
+            const when = updatedText(j.updated);
+            setStatus("متصل" + (when ? " · آخر تحديث للأسعار: " + when : ""), "ok");
+        } catch (e) {
+            setStatus("تعذّر التحديث التلقائي، تُعرض آخر أسعار معروفة", "bad");
+        }
+    }
+
+    $("apply").addEventListener("click", () => {
+        const v = id => parseFloat($(id).value);
+        const ids = ["usdBuy", "usdSell", "eurUsd", "gbpUsd", "kwdPerUsd"];
+        if (ids.some(id => isNaN(v(id)) || v(id) <= 0)) {
+            alert("أدخل أرقامًا صحيحة أكبر من صفر");
+            return;
+        }
+        manual = true;
+        applyRates({
+            usdBuy: v("usdBuy"), usdSell: v("usdSell"),
+            eurUsd: v("eurUsd"), gbpUsd: v("gbpUsd"), kwdPerUsd: v("kwdPerUsd")
+        });
+        setStatus("وضع يدوي: التحديث التلقائي متوقف", "manual");
+    });
+
+    $("auto").addEventListener("click", () => {
+        manual = false;
+        setStatus("جاري التحديث...", "");
+        refresh();
+    });
+
+    $("swap").addEventListener("click", () => {
+        const f = $("from").value;
+        $("from").value = $("to").value;
+        $("to").value = f;
+        convert();
+    });
+
+    $("share").addEventListener("click", () => {
+        const text = `أسعار العملات مقابل الجنيه السوداني\nالدولار: شراء ${fmt(state.usdBuy)} | بيع ${fmt(state.usdSell)}\n(سعر تقريبي، السوق الموازي)`;
+        window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
+    });
+
+    ["amount", "from", "to"].forEach(id => $(id).addEventListener("input", convert));
+
+    // التشغيل
+    prev = load("lastSeen");
+    render();
+    fillSelects();
+    loadInputs();
+    convert();
+    refresh();
+    setInterval(refresh, REFRESH_MS);
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
+</script>
+
+</body>
+</html>
